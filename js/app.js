@@ -14,7 +14,7 @@ function init() {
     createCamera();
     createControls();
     createLights();
-    addBox();
+    createCubesMesh(10);
     // loadModels();
 
     renderer.setAnimationLoop( () => {
@@ -92,7 +92,10 @@ function createLights() {
     var dirLight = new THREE.DirectionalLight(0xffffff, 5.0);
     dirLight.position.set( 10, 10, 10 );
 
-    scene.add(ambLight, dirLight);
+    scene.add(
+        ambLight, 
+        dirLight
+    );
 }
 
 // ADD BOX
@@ -109,37 +112,76 @@ function addBox() {
 
 /* ------------ Create Cubes -------------- */
 function cubeMaterials() {
-    const cubeRed = new THREE.MeshStandardMaterial({
+    const red = new THREE.MeshStandardMaterial({
         color: 0xff3333,
         flatShading: true,
     });
-    const cubeYellow = new THREE.MeshStandardMaterial({
+    const yellow = new THREE.MeshStandardMaterial({
         color: 0xfef59c,
         flatShading: true,
     });
-    const cubeBlue = new THREE.MeshStandardMaterial({
+    const blue = new THREE.MeshStandardMaterial({
         color: 0xaddaff,
         flatShading: true,
     });
 
     return {
-        cubeRed,
-        cubeYellow,
-        cubeBlue,
+        red,
+        yellow,
+        blue,
     };
 }
 
 function cubeGeometry() {
-    const cube = new THREE.BoxGeometry(1, 1, 1);
+    const cube = new THREE.BoxBufferGeometry(1, 1, 1);
     return cube;
 }
 
 function createCubesGeometry() {
+    const cubeSmall = new THREE.BoxBufferGeometry(1, 1, 1);
+    const cubeMedium = new THREE.BoxBufferGeometry(2, 2, 2);
+    const cubeLarge = new THREE.BoxBufferGeometry(3, 3, 3);
+    
+    return {
+        cubeSmall,
+        cubeMedium,
+        cubeLarge
+    }
+}
+
+function createCubesMesh(objectsPerRow) {
     const cubes = new THREE.Group();
     scene.add(cubes);
-
+    
     const materials = cubeMaterials();
-    const geometries = cubeGeometry();
+    const geometries = createCubesGeometry();
+    
+    const offset = 2;
+    const startPos = objectsPerRow;
+    let pos = new THREE.Vector3( -startPos , -startPos, -10);
+
+    console.log(materials);
+    console.log(geometries);
+    
+    var cubeMesh = new THREE.Mesh(geometries.cubeSmall, materials.red);
+    
+    for (let zPos = 0; zPos < objectsPerRow; zPos++)
+    {
+        for (let yPos = 0; yPos < objectsPerRow; yPos++)
+        {
+            for (let xPos = 0; xPos < objectsPerRow; xPos++)
+            {
+                var cubeMesh = cubeMesh.clone();
+                cubeMesh.position.set(pos.x, pos.y, pos.z);
+                cubes.add(cubeMesh);
+                pos.x += offset;
+            }
+            pos.x = -startPos;
+            pos.y += offset;
+        }
+        pos.z -= offset;
+        pos.y = -startPos;
+    }
 }
 
 
@@ -161,9 +203,9 @@ function stop() {
 }
 
 function update() {
-    cubeMesh.rotation.x += 0.005;
-    cubeMesh.rotation.y += 0.005;
-    cubeMesh.rotation.z -= 0.005;
+    // cubeMesh.rotation.x += 0.005;
+    // cubeMesh.rotation.y += 0.005;
+    // cubeMesh.rotation.z -= 0.005;
 
     // stork animation
     const delta = clock.getDelta();
