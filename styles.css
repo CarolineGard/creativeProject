@@ -1,0 +1,21 @@
+body {
+    margin: 0px;
+    overflow: hidden;
+    text-align: center;
+}
+
+h1 {
+    color: #fc6d76;
+    font-family: "Courier New", Courier, monospace;
+    font-weight: 100;
+    z-index: 1;
+    width: 100%;
+    position: absolute;
+}
+
+#world {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+
