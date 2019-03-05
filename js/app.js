@@ -1,7 +1,10 @@
 let scene, renderer, container, controls;
 let FOV, aspect, nearPlane, farPlane, WIDTH, HEIGHT;
 
+let cubesMesh;
 let cubeMesh;
+let cubesGroup;
+
 const mixers = [];
 
 const clock = new THREE.Clock();
@@ -14,6 +17,7 @@ function init() {
     createCamera();
     createControls();
     createLights();
+    createFog();
     createCubesMesh(10);
     // loadModels();
 
@@ -46,10 +50,12 @@ function createRenderer() {
     renderer.setSize(WIDTH, HEIGHT);
     renderer.setPixelRatio(window.devicePixelRatio);
     
-    renderer.shadowMap.enabled = true;
     renderer.gammaFactor = 2.0;
     renderer.gammaOutput = true;
     renderer.physicallyCorrectLights = true;
+    
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default
 
     container.appendChild(renderer.domElement);
 }
@@ -68,12 +74,13 @@ function createCamera() {
         aspect,
         nearPlane,
         farPlane
-        );
+    );
         
-        camera.position.set(0, 10, 20);
-        camera.lookAt(scene.position);
-        scene.add(camera);
-    }
+    camera.position.set(0, 10, 20);
+    camera.lookAt(scene.position);
+        
+    scene.add(camera);
+}
 
 // CONTROLS
 function createControls() {
@@ -89,13 +96,39 @@ function createLights() {
         5, // intensity
     );
 
-    var dirLight = new THREE.DirectionalLight(0xffffff, 5.0);
-    dirLight.position.set( 10, 10, 10 );
+    var dirLight1 = new THREE.DirectionalLight(0xffffff, 3.0); //5.0
+    var dirLight2 = new THREE.DirectionalLight(0xffffff, 2.0);
+   
+    dirLight1.position.set( 100, 100, 100 );
+    dirLight1.castShadow = true;
+
+    dirLight2.position.set( 0, 100, 200 );
+    dirLight2.castShadow = true;
+
+    // shadow properties for direct light
+    dirLight1.shadow.mapSize.height = 512;
+    dirLight1.shadow.mapSize.width = 512;
+    dirLight1.shadow.camera.near = 0.5;
+    dirLight1.shadow.far = 10;
+
+    var helperDir1 = new THREE.CameraHelper( dirLight1.shadow.camera );
+    var helperDir2 = new THREE.CameraHelper( dirLight2.shadow.camera );
 
     scene.add(
         ambLight, 
-        dirLight
+        dirLight1,
+        dirLight2,
+        // helperDir1,
+        // helperDir2
     );
+}
+
+// CREATE FOG
+function createFog() {
+    var fogColor = new THREE.Color(0xffffff);
+    scene.background = fogColor;
+    //scene.fog = new THREE.Fog(fogColor, 0.0025, 80);
+    scene.fog = new THREE.FogExp2(fogColor, 0.02);
 }
 
 // ADD BOX
@@ -105,7 +138,7 @@ function addBox() {
         color: 0xfc6d76,
         side: THREE.DoubleSide
     });
-    cubeMesh = new THREE.Mesh(geometry, material);
+    var cubeMesh = new THREE.Mesh(geometry, material);
 
     scene.add(cubeMesh);
 }
@@ -113,11 +146,12 @@ function addBox() {
 /* ------------ Create Cubes -------------- */
 function cubeMaterials() {
     const red = new THREE.MeshStandardMaterial({
-        color: 0xff3333,
-        flatShading: true,
+        color: 0xff7f7c,
+        flatShading: false,
+        opacity: 0.9
     });
     const yellow = new THREE.MeshStandardMaterial({
-        color: 0xfef59c,
+        color: 0xfff17c,
         flatShading: true,
     });
     const blue = new THREE.MeshStandardMaterial({
@@ -150,8 +184,8 @@ function createCubesGeometry() {
 }
 
 function createCubesMesh(objectsPerRow) {
-    const cubes = new THREE.Group();
-    scene.add(cubes);
+    cubesGroup = new THREE.Group();
+    scene.add(cubesGroup);
     
     const materials = cubeMaterials();
     const geometries = createCubesGeometry();
@@ -159,21 +193,24 @@ function createCubesMesh(objectsPerRow) {
     const offset = 2;
     const startPos = objectsPerRow;
     let pos = new THREE.Vector3( -startPos , -startPos, -10);
+    
+    cubesMesh = new THREE.Mesh(geometries.cubeSmall, materials.red);
+    cubesMesh.rotation.set(0.5, 0.5, 0.5);
 
-    console.log(materials);
-    console.log(geometries);
-    
-    var cubeMesh = new THREE.Mesh(geometries.cubeSmall, materials.red);
-    
+    // Shadow settings
+    cubesMesh.castShadow = true;
+    cubesMesh.receiveShadow = true;
+
+
     for (let zPos = 0; zPos < objectsPerRow; zPos++)
     {
         for (let yPos = 0; yPos < objectsPerRow; yPos++)
         {
             for (let xPos = 0; xPos < objectsPerRow; xPos++)
             {
-                var cubeMesh = cubeMesh.clone();
-                cubeMesh.position.set(pos.x, pos.y, pos.z);
-                cubes.add(cubeMesh);
+                var cMesh = cubesMesh.clone();
+                cMesh.position.set(pos.x, pos.y, pos.z);
+                cubesGroup.add(cMesh);
                 pos.x += offset;
             }
             pos.x = -startPos;
@@ -183,8 +220,6 @@ function createCubesMesh(objectsPerRow) {
         pos.y = -startPos;
     }
 }
-
-
 
 /* ---------------------------------------- */
 
@@ -203,13 +238,17 @@ function stop() {
 }
 
 function update() {
-    // cubeMesh.rotation.x += 0.005;
-    // cubeMesh.rotation.y += 0.005;
-    // cubeMesh.rotation.z -= 0.005;
+    // cubesMesh.rotation.x += 0.005;
+    // cubesMesh.rotation.y += 0.005;
+    // cubesMesh.rotation.z -= 0.005;
 
     // stork animation
     const delta = clock.getDelta();
-    mixers.forEach( (mixer) => { mixer.update(delta); } );
+    //mixers.forEach( (mixer) => { mixer.update(delta); } );
+
+    //cubes animation
+    //cubesGroup.position.x += Math.cos(delta);
+
 }
 
 function render() {
