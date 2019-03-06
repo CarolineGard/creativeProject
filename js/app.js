@@ -18,7 +18,7 @@ function init() {
     createControls();
     createLights();
     createFog();
-    createCubesMesh(10);
+    createCubeRandMesh(10);
     // loadModels();
 
     renderer.setAnimationLoop( () => {
@@ -159,11 +159,9 @@ function cubeMaterials() {
         flatShading: true,
     });
 
-    return {
-        red,
-        yellow,
-        blue,
-    };
+    var colors = [red, yellow, blue];
+
+    return colors;
 }
 
 function cubeGeometry() {
@@ -172,7 +170,7 @@ function cubeGeometry() {
 }
 
 function createCubesGeometry() {
-    const cubeSmall = new THREE.BoxBufferGeometry(1, 1, 1);
+    const cubeSmall = new THREE.BoxBufferGeometry(0.8, 0.8, 0.8);
     const cubeMedium = new THREE.BoxBufferGeometry(2, 2, 2);
     const cubeLarge = new THREE.BoxBufferGeometry(3, 3, 3);
     
@@ -183,7 +181,38 @@ function createCubesGeometry() {
     }
 }
 
-function createCubesMesh(objectsPerRow) {
+function createCubeRandMesh(objectsPerRow) {
+    let randX, randY, randZ, randRot, randColor;
+    const randInterval = objectsPerRow * 5;
+
+    cubesGroup = new THREE.Group();
+    scene.add(cubesGroup);
+    
+    const materials = cubeMaterials();
+    const geometries = createCubesGeometry();
+    cubesMesh = new THREE.Mesh(geometries.cubeSmall, materials[0]);
+
+    // Shadow settings
+    cubesMesh.castShadow = true;
+    cubesMesh.receiveShadow = true;
+
+    var nrOfCubes = Math.pow(objectsPerRow, 3);
+    for ( let i = 0; i < nrOfCubes; i++ ) {
+        var cMesh = cubesMesh.clone();
+        randRot = Math.random() * 0.2;
+        // randColor = Math.floor(Math.random() * 3);
+        randX = Math.random() * randInterval - (randInterval/2);
+        randY = Math.random() * randInterval - (randInterval/2);
+        randZ = Math.random() * randInterval - (randInterval/2);
+        
+        cMesh.position.set(randX, randY, randZ);
+        cMesh.rotation.set(randRot, -randRot, randRot);
+        // cMesh.material.color.set(materials[randColor].color);
+        cubesGroup.add(cMesh);
+    }
+}
+
+function createCubeGridMesh(objectsPerRow) {
     cubesGroup = new THREE.Group();
     scene.add(cubesGroup);
     
@@ -201,7 +230,7 @@ function createCubesMesh(objectsPerRow) {
     cubesMesh.castShadow = true;
     cubesMesh.receiveShadow = true;
 
-
+    // Grid
     for (let zPos = 0; zPos < objectsPerRow; zPos++)
     {
         for (let yPos = 0; yPos < objectsPerRow; yPos++)
