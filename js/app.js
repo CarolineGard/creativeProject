@@ -85,6 +85,16 @@ function createCamera() {
 // CONTROLS
 function createControls() {
     controls = new THREE.OrbitControls(camera, container);
+    controls.enablePan = false;
+	controls.enableZoom = false;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+	controls.rotateSpeed = 0.05;
+
+    controls.maxAzimuthAngle = 1;
+    controls.minAzimuthAngle = -1;
+    controls.maxPolarAngle   = 2.0;
+    controls.minPolarAngle   = 0.7;
 }
 
 // LIGHTING
@@ -272,6 +282,7 @@ function update() {
     // cubesMesh.rotation.z -= 0.005;
 
     // stork animation
+    controls.update();
     const delta = clock.getDelta();
     //mixers.forEach( (mixer) => { mixer.update(delta); } );
 
