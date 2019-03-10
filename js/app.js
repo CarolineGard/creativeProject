@@ -4,8 +4,23 @@ let FOV, aspect, nearPlane, farPlane, WIDTH, HEIGHT;
 let cubesMesh;
 let cubeMesh;
 let cubesGroup;
+let particleSystem, particles;
+
+const NR_PARTICLES = 1800;
+const COLORS = {
+    black: 0x000000,
+    white: 0xffffff,
+    red: 0xff7f7c,
+    blue: 0xaddaff,
+    yellow: 0xfff17c 
+};
+
 
 const mixers = [];
+
+var stats = new Stats();
+stats.showPanel( 1 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild( stats.dom );
 
 const clock = new THREE.Clock();
 
@@ -18,12 +33,15 @@ function init() {
     createControls();
     createLights();
     createFog();
-    createCubeRandMesh(10);
+    createParticleSystem(COLORS.blue);
+    createCubeRandMesh(7);
     // loadModels();
 
     renderer.setAnimationLoop( () => {
+        stats.begin();
         update();
         render();
+        stats.end();
     });
 }
 
@@ -46,7 +64,7 @@ function createScene() {
 function createRenderer() {
     // Render settings
     renderer = new THREE.WebGLRenderer({alpha: true, antialias: true});
-    renderer.setClearColor(0x000000);
+    renderer.setClearColor(COLORS.black);
     renderer.setSize(WIDTH, HEIGHT);
     renderer.setPixelRatio(window.devicePixelRatio);
     
@@ -135,22 +153,43 @@ function createLights() {
 
 // CREATE FOG
 function createFog() {
-    var fogColor = new THREE.Color(0xffffff);
+    var fogColor = new THREE.Color(COLORS.white);
     scene.background = fogColor;
     //scene.fog = new THREE.Fog(fogColor, 0.0025, 80);
     scene.fog = new THREE.FogExp2(fogColor, 0.02);
 }
 
-// ADD BOX
-function addBox() {
-    var geometry = new THREE.BoxGeometry(1, 1, 1);
-    var material = new THREE.MeshStandardMaterial({
-        color: 0xfc6d76,
-        side: THREE.DoubleSide
-    });
-    var cubeMesh = new THREE.Mesh(geometry, material);
+// PARTICLE SYSTEM
+function createParticleSystem(color) {
+    c = 0x000000;
+    particles = new THREE.Geometry();
+    let material  = new THREE.PointsMaterial({
+        color: color,
+        size: 5.5,
+        transparent: true
+    }); 
 
-    scene.add(cubeMesh);
+    for (let p = 0; p < NR_PARTICLES; p++) {
+        let pX = Math.random() * 90 - 45,
+            pY = Math.random() * 90 - 45,
+            pZ = Math.random() * 90 - 45;
+        
+        const dist = Math.sqrt(Math.pow(pX - camera.position.x, 2) + 
+                               Math.pow(pY - camera.position.y, 2) + 
+                               Math.pow(pZ - camera.position.z, 2) );
+        
+        if ( dist > 30 ){
+            particle = new THREE.Vector3(pX, pY, pZ);
+            particle.velocity = new THREE.Vector3(0, -Math.random(), 0);
+            particles.vertices.push(particle) 
+        }
+    }
+
+    particleSystem = new THREE.Points(
+        particles,
+        material
+    );
+    scene.add(particleSystem);
 }
 
 /* ------------ Create Cubes -------------- */
@@ -277,18 +316,38 @@ function stop() {
 }
 
 function update() {
+
+    //particleSystem.rotation.y += 0.0001;
+    let pCount = NR_PARTICLES;
+
+    // while (pCount--) {
+    //     let particle = particles.vertices[pCount];
+    //     console.log(particle);
+
+    //     if (particle.y < -200) {
+    //         particle.position.y = 200;
+    //         particle.velocity.y= 0;
+    //     }
+
+    //     particle.velocity.y -= Math.random() * 0.1;
+    //     particle.position.addSelf(particle.velocity); //ERROR 
+
+    //     particleSystem.geometry.__dirtyVertices = true;
+    // }
+    
     // cubesMesh.rotation.x += 0.005;
     // cubesMesh.rotation.y += 0.005;
     // cubesMesh.rotation.z -= 0.005;
-
+    
+    
     // stork animation
+    // const delta = clock.getDelta();
+    // mixers.forEach( (mixer) => { mixer.update(delta); } );
+    
+    // cubes animation
+    // cubesGroup.position.x += Math.cos(delta);
+    
     controls.update();
-    const delta = clock.getDelta();
-    //mixers.forEach( (mixer) => { mixer.update(delta); } );
-
-    //cubes animation
-    //cubesGroup.position.x += Math.cos(delta);
-
 }
 
 function render() {
